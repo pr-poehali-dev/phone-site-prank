@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
+import { Input } from '@/components/ui/input';
 import Icon from '@/components/ui/icon';
 
 const Index = () => {
@@ -9,7 +10,10 @@ const Index = () => {
   const [showAbout, setShowAbout] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState([100]);
+  const [audioSrc, setAudioSrc] = useState('https://rus.hitmotop.com/get/music/20241214/Ston_prank_-_Ston_prank_78732798.mp3');
+  const [customFileName, setCustomFileName] = useState<string>('');
   const audioRef = useRef<HTMLAudioElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (audioRef.current) {
@@ -40,14 +44,43 @@ const Index = () => {
     setShowAbout(!showAbout);
   };
 
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.type.startsWith('audio/')) {
+        const url = URL.createObjectURL(file);
+        setAudioSrc(url);
+        setCustomFileName(file.name);
+        if (audioRef.current) {
+          audioRef.current.load();
+        }
+        setIsPlaying(false);
+      } else {
+        alert('Пожалуйста, выберите аудиофайл');
+      }
+    }
+  };
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
   return (
     <div className="min-h-screen w-full relative flex items-center justify-center p-4">
       <audio 
         ref={audioRef} 
-        src="https://rus.hitmotop.com/get/music/20241214/Ston_prank_-_Ston_prank_78732798.mp3"
+        src={audioSrc}
         preload="auto"
         loop
         onEnded={() => setIsPlaying(false)}
+      />
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="audio/*"
+        onChange={handleFileUpload}
+        className="hidden"
       />
 
       {showModal && (
@@ -80,15 +113,38 @@ const Index = () => {
 
           <Card className="p-6">
             <div className="space-y-4">
-              <div className="flex items-center justify-center gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Icon name="Upload" size={18} />
+                  Загрузить своё аудио
+                </label>
                 <Button
-                  onClick={togglePlayPause}
-                  size="lg"
+                  onClick={handleUploadClick}
+                  variant="outline"
                   className="w-full"
+                  size="lg"
                 >
-                  <Icon name={isPlaying ? "Pause" : "Play"} className="mr-2" size={20} />
-                  {isPlaying ? 'Пауза' : 'Воспроизвести'}
+                  <Icon name="FileAudio" className="mr-2" size={20} />
+                  {customFileName || 'Выбрать файл'}
                 </Button>
+                {customFileName && (
+                  <p className="text-xs text-muted-foreground text-center">
+                    Загружено: {customFileName}
+                  </p>
+                )}
+              </div>
+
+              <div className="pt-4 border-t border-border">
+                <div className="flex items-center justify-center gap-4">
+                  <Button
+                    onClick={togglePlayPause}
+                    size="lg"
+                    className="w-full"
+                  >
+                    <Icon name={isPlaying ? "Pause" : "Play"} className="mr-2" size={20} />
+                    {isPlaying ? 'Пауза' : 'Воспроизвести'}
+                  </Button>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -146,6 +202,7 @@ const Index = () => {
                     Возможности
                   </h3>
                   <ul className="text-sm text-muted-foreground leading-relaxed list-disc list-inside space-y-1">
+                    <li>Загрузка собственного аудиофайла</li>
                     <li>Управление воспроизведением (пауза/воспроизведение)</li>
                     <li>Регулятор громкости</li>
                     <li>Автоматическое зацикливание аудио</li>
